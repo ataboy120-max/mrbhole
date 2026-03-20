@@ -1,6 +1,6 @@
 FROM pihole/pihole:latest
 
-# Tailscale, bash এবং curl ইন্সটল করা
+# Tailscale এবং প্রয়োজনীয় টুলস ইন্সটল করা
 RUN apk add --no-cache tailscale bash curl
 
 # স্টার্টআপ স্ক্রিপ্ট তৈরি করা
@@ -19,16 +19,18 @@ else
 fi
 
 # Pi-hole এর মেইন এন্ট্রি পয়েন্ট চালু করা
-# Alpine ভিত্তিক ইমেজে এটি সাধারণত /s6-init অথবা /init হয়
+# লেটেস্ট ইমেজে এটি সাধারণত /s6-init অথবা সরাসরি মূল কমান্ড হয়
 if [ -f "/s6-init" ]; then
     exec /s6-init
-else
+elif [ -f "/init" ]; then
     exec /init
+else
+    # যদি কোনোটিই না পাওয়া যায়, তবে সরাসরী মূল এন্ট্রি পয়েন্ট কল করা
+    exec /usr/local/bin/docker-pi-hole
 fi
 EOF
 
 # স্ক্রিপ্টটি এক্সিকিউটেবল করা
 RUN chmod +x /start.sh
 
-# Render এর জন্য ডিফল্ট এন্ট্রি পয়েন্ট সেট করা
 ENTRYPOINT ["/start.sh"]
