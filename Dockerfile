@@ -1,18 +1,11 @@
 FROM pihole/pihole:latest
 
-# Tailscale এবং প্রয়োজনীয় টুলস ইন্সটল করা
-RUN apk add --no-cache tailscale bash curl
+# Cloudflared ইন্সটল করা
+RUN apt-get update && apt-get install -y curl && \
+    curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb && \
+    dpkg -i cloudflared.deb && \
+    rm cloudflared.deb
 
-# আপনার তৈরি করা start.sh ফাইলটি কন্টেইনারে কপি করা
-COPY start.sh /start.sh
-
-# ফাইলটিকে রান করার অনুমতি দেওয়া
-RUN chmod +x /start.sh
-
-# পোর্ট সেটিংস
-EXPOSE 80
-EXPOSE 53/tcp
-EXPOSE 53/udp
-
-# কন্টেইনার স্টার্ট হলে start.sh রান করবে
-ENTRYPOINT ["/start.sh"]
+# সরাসরি টানেল এবং পি-হোল স্টার্ট করার কমান্ড
+ENTRYPOINT cloudflared tunnel --no-autoupdate run --token ${TUNNEL_TOKEN} & \
+           exec /init
